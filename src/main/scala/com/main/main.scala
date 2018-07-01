@@ -38,6 +38,7 @@ object Main {
     val post2 = read[Post](ser)
     println(post2)
 
+    CassandraDB.createDB()
     println("\n------ Exit ------")
   }
 }
