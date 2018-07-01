@@ -2,6 +2,7 @@ package com.main
 
 import com.core._
 import com.utils._
+import com.kafka._
 
 import java.net.URI
 
@@ -38,7 +39,9 @@ object Main {
     val post2 = read[Post](ser)
     println(post2)
 
-    CassandraDB.createDB()
+    PostProducer.testProducer(post)
+
+    // CassandraDB.createDB()
     println("\n------ Exit ------")
   }
 }
