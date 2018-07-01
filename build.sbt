@@ -12,3 +12,10 @@ libraryDependencies += "com.github.kardapoltsev" %% "json4s-java-time" % "1.0.2"
 resolvers += "Spark Packages Repo" at "https://dl.bintray.com/spark-packages/maven"
 libraryDependencies += "com.datastax.spark" %% "spark-cassandra-connector" % "2.0.0"
 libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.0.0"
+
+// If you want to activate the log4j.properties file:
+// fork in run := true
+// javaOptions in run ++= Seq(
+//   "-Dlog4j.debug=true",
+//   "-Dlog4j.configuration=log4j.properties")
+// outputStrategy := Some(StdoutOutput)
