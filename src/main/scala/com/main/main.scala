@@ -3,6 +3,7 @@ package com.main
 import com.core._
 import com.utils._
 import com.kafka._
+import com.cassandra._
 
 import java.net.URI
 
