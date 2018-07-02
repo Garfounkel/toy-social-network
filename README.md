@@ -41,3 +41,8 @@ Assuming Cassandra is up and running:
 cqlsh> CREATE KEYSPACE test WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1 };
 ```
 To create a test keyspace.
+
+Or, use this file this way:
+```
+> cqlsh -f src/main/scala/core/cassandra/create_users.cql
+```
