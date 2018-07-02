@@ -7,9 +7,13 @@ import com.cassandra._
 
 import java.net.URI
 
+import java.util.Properties
+
 import org.json4s._
 import org.json4s.native.Serialization
 import org.json4s.native.Serialization.{read, write}
+
+import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord, ProducerConfig}
 
 import java.time.Instant
 import java.time.format.DateTimeFormatter
@@ -40,9 +44,20 @@ object Main {
     val post2 = read[Post](ser)
     println(post2)
 
-    PostProducer.testProducer(post)
+    // val serializer = "org.apache.kafka.common.serialization.StringSerializer"
+    // val config = new Properties()
+    // config.put("bootstrap.servers", "localhost:9092")
+    // config.put("key.serializer", serializer)
+    // config.put("value.serializer", serializer)
+    //
+    // val postProducer = Producer[Post](config)
+    //
+    // postProducer.send(post)
+    // postProducer.close()
 
-    // CassandraDB.createDB()
+    // PostProducer.testProducer(post)
+
+    CassandraDB.createDB()
     println("\n------ Exit ------")
   }
 }
