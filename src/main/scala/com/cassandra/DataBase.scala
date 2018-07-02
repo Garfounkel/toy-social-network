@@ -17,19 +17,34 @@ object CassandraDB {
 
   def createDB() = {
     val conf = new SparkConf(true)
-        .set("spark.cassandra.connection.host", "127.0.0.1")
+        .set("spark.cassandra.connection.host", "localhost")
 
-    val sc = new SparkContext("spark://127.0.0.1:7077", "test", conf)
+    val sc = new SparkContext("local", "test", conf)
     //sc.setLogLevel("ERROR")
 
     // meaning the cassandra table used is test.words
     val keyspace = "test"
     val table = "users"
 
+    // creating the database
     CassandraConnector(conf).withSessionDo { session =>
       // create keyspace here instead later on ..
-      session.execute("USE test")
-      //session.execute("SELECT * FROM users" )
+      session.execute("DROP KEYSPACE IF EXISTS socialNetwork")
+      session.execute("CREATE KEYSPACE socialNetwork WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1 }")
+
+      session.execute("USE socialNetwork")
+
+      // create Table users
+      session.execute("DROP TABLE IF EXISTS users")
+      session.execute("CREATE TABLE users(id int PRIMARY KEY, updatedOn date, image text, username text, deleted boolean);")
+
+      // inserting examples
+      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (1000, '2017-05-05', '', 'barthiex', false)")
+      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (1, '2017-05-05', 'http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png', 'Simon', false)")
+      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (2, '2017-05-05', '', 'Karim', false)")
+      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (3, '2017-05-05', '', 'Nicolas', false)")
+      /*session.execute("USE socialNetwork")
+      session.execute("SELECT * FROM users")*/
     }
 
     // write two rows to the table:
@@ -37,8 +52,6 @@ object CassandraDB {
     // col.saveAsCassandraTable(keyspace, table)
 
     //Read the table and print its contents:
-    val rdd = sc.cassandraTable(keyspace, table)
-    rdd.foreach(println)
 
     sc.stop()
   }
