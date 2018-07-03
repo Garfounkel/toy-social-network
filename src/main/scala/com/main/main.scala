@@ -31,41 +31,22 @@ object Main {
 
     val uri = URI.create("http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png")
 
-    val post = Post(Id("post1"), Instant.now(), Id("user0"), "Some Text", uri, false)
+    val post = Post(Id("post6"), Instant.now(), Id("user0"), "Some Text", uri, false)
     println(post)
 
-    val user = User(Id("user0"), Instant.now(), uri, "Garfounkel", false)
+    val user = User(Id("user6"), Instant.now(), uri, "Garfounkel", false)
     println(user)
 
-    val comment = Comment(Id("com0"), Id("post0"), Instant.now(), Id("user0"), "Some Text", false)
+    val comment = Comment(Id("com6"), Id("post0"), Instant.now(), Id("user0"), "Some Text", false)
     println(comment)
 
-    // val ser = write(post)
-    // val post2 = read[Post](ser)
-    // println(post2)
+    val producer = KafkaMultiProducer()
 
-    // val serializer = "org.apache.kafka.common.serialization.StringSerializer"
-    // val config = new Properties()
-    // config.put("bootstrap.servers", "localhost:9092")
-    // config.put("key.serializer", serializer)
-    // config.put("value.serializer", serializer)
+    producer.send(post)
+    producer.send(user)
+    producer.send(comment)
 
-    // val postProducer = Producer[Post](config)
-
-    // postProducer.send(post)
-    // postProducer.close()
-
-    val postProducer = CustomKafkaProducer[Post]()
-    postProducer.send(post)
-    postProducer.close()
-
-    val userProducer = CustomKafkaProducer[User]()
-    userProducer.send(user)
-    userProducer.close()
-
-    val commentProducer = CustomKafkaProducer[Comment]()
-    commentProducer.send(comment)
-    commentProducer.close()
+    producer.close()
 
     // CassandraDB.createDB()
 

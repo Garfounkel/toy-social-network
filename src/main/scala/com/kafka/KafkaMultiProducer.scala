@@ -19,7 +19,7 @@ trait Topic[V] {
   def value: String
 }
 
-case class CustomKafkaProducer[V]() {
+case class KafkaMultiProducer() {
   val serializer = "org.apache.kafka.common.serialization.StringSerializer"
   val config = new Properties()
   config.put("bootstrap.servers", "localhost:9092")
