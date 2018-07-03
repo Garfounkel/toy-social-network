@@ -5,7 +5,6 @@ Social network backend in Scala/Spark
 To start a kafka server and a zookeeper server from the kafka repertory:
 ```
 > bin/zookeeper-server-start.sh config/zookeeper.properties
-
   INFO Reading configuration from: config/zookeeper.properties(org.apache.zookeeper.server.quorum.QuorumPeerConfig)
   ...
 
@@ -15,23 +14,20 @@ To start a kafka server and a zookeeper server from the kafka repertory:
 ```
 Assuming kafka (port 9092) and zookeeper (port 2181) servers are up and running:
 ```
-> kafka-topics.sh --create --zookeeper localhost:9092 --replication-factor 1 --partitions 1 --topic post
-
-Created topic "post".
+> kafka-topics.sh --create --zookeeper localhost:9092 --replication-factor 1 --partitions 1 --topic posts
+Created topic "posts".
 ```
 
 Check that the topic has been created:
 ```
 > kafka-topics.sh --list --zookeeper localhost:2181
-
- post
+posts
 ```
 
 Read data wrote to the topic (after running main.scala to write some datas):
 ```
-> kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic post --from-beginning
-
- "id":"post0","updatedOn":"2018-07-01T22:39:42.390Z","author":"user0","text":"Some Text","image":"http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png","deleted":false
+> kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic posts --from-beginning
+"id":"post0","updatedOn":"2018-07-01T22:39:42.390Z","author":"user0","text":"Some Text","image":"http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png","deleted":false
 ```
 
 ## Working with Cassandra

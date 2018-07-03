@@ -2,3 +2,5 @@
 *.log
 target/
 data/reduced-tweets.json
+*.out
+project/
