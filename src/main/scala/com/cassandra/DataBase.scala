@@ -7,14 +7,6 @@ import com.datastax.spark.connector._
 import com.datastax.spark.connector.cql._
 
 object CassandraDB {
-  /*def existDB(name : String) : Boolean = {
-    CassandraConnector(conf).withSessionDo { session =>
-      session.execute("SELECT * FROM " + name )
-      //session.execute("CREATE KEYSPACE test2 WITH REPLICATION = {'class': 'SimpleStrategy', 'replication_factor': 1 }")
-      //session.execute("CREATE TABLE test2.words (word text PRIMARY KEY, count int)")
-    }
-  }*/
-
   def createDB() = {
     val conf = new SparkConf(true)
         .set("spark.cassandra.connection.host", "localhost")
@@ -36,22 +28,41 @@ object CassandraDB {
 
       // create Table users
       session.execute("DROP TABLE IF EXISTS users")
-      session.execute("CREATE TABLE users(id int PRIMARY KEY, updatedOn date, image text, username text, deleted boolean);")
+      session.execute("CREATE TABLE users(id TIMEUUID, updatedOn date, image text, username text, deleted boolean, PRIMARY KEY(username, id));")
 
-      // inserting examples
-      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (1000, '2017-05-05', '', 'barthiex', false)")
-      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (1, '2017-05-05', 'http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png', 'Simon', false)")
-      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (2, '2017-05-05', '', 'Karim', false)")
-      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (3, '2017-05-05', '', 'Nicolas', false)")
-      /*session.execute("USE socialNetwork")
-      session.execute("SELECT * FROM users")*/
+      // inserting examples for table users
+      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), toDate(now()), 'http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png', 'Garfounkel', false)")
+      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), toDate(now()), '', 'barthiex', false)")
+      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), toDate(now()), 'http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png', 'Simon', false)")
+      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), toDate(now()), '', 'Karim', false)")
+      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), toDate(now()), '', 'Nicolas', false)")
+
+      session.execute("DROP TABLE IF EXISTS posts")
+      session.execute("CREATE TABLE posts(id TIMEUUID, updatedOn date, author TIMEUUID, text text, image text, deleted boolean, PRIMARY KEY (id));")
+
+      val user0 = session.execute("SELECT * FROM users WHERE username = 'Garfounkel'")
+      if (!user0.isExhausted)
+      {
+        // inserting examples for table posts
+        session.execute("INSERT INTO posts(id, updatedOn, author, text, image, deleted) VALUES (now(), toDate(now()), " + user0.one.getUUID("id") + " ,'Some Text', 'http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png', false)")
+      }
+
+      session.execute("DROP TABLE IF EXISTS comments")
+      session.execute("CREATE TABLE comments(id TIMEUUID, updatedOn date, postID TIMEUUID, author TIMEUUID, text text, deleted boolean, PRIMARY KEY (id));")
+
+      // because user0.one exhausted user0, since there is only one element
+      val user1 = session.execute("SELECT * FROM users WHERE username = 'Garfounkel'")
+      if (!user1.isExhausted)
+      {
+        val authorID = user1.one.getUUID("id")
+        val post0 = session.execute("SELECT * FROM posts WHERE author = " + authorID + "ALLOW FILTERING")
+        if (!post0.isExhausted)
+        {
+          // inserting examples for table posts
+          session.execute("INSERT INTO comments(id, updatedOn, postID, author, text, deleted) VALUES (now(), toDate(now()), " + authorID + ", " + post0.one.getUUID("id") + " ,'Some Text', false)")
+        }
+      }
     }
-
-    // write two rows to the table:
-    // val col = sc.parallelize(Seq(("Simon", 1), ("Karim", 2), ("Nico", 3), ("Berthier", 1000)))
-    // col.saveAsCassandraTable(keyspace, table)
-
-    //Read the table and print its contents:
 
     sc.stop()
   }
