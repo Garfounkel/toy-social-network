@@ -6,17 +6,20 @@ import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import com.datastax.spark.connector.cql._
 
+import java.net.URI
+
+import java.time.Instant
+
+import com.core._
+
 object CassandraDB {
+
   def createDB() = {
     val conf = new SparkConf(true)
         .set("spark.cassandra.connection.host", "localhost")
 
-    val sc = new SparkContext("local", "test", conf)
-    //sc.setLogLevel("ERROR")
-
-    // meaning the cassandra table used is test.words
-    val keyspace = "test"
-    val table = "users"
+    val sc = new SparkContext("local", "cassandra", conf)
+    sc.setLogLevel("ERROR")
 
     // creating the database
     CassandraConnector(conf).withSessionDo { session =>
@@ -28,7 +31,7 @@ object CassandraDB {
 
       // create Table users
       session.execute("DROP TABLE IF EXISTS users")
-      session.execute("CREATE TABLE users(id TIMEUUID, updatedOn date, image text, username text, deleted boolean, PRIMARY KEY(username, id));")
+      session.execute("CREATE TABLE users(id TIMEUUID, updatedOn date, image text, username text, deleted boolean, PRIMARY KEY(username));")
 
       // inserting examples for table users
       session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), toDate(now()), 'http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png', 'Garfounkel', false)")
@@ -66,4 +69,48 @@ object CassandraDB {
 
     sc.stop()
   }
+
+  // ToDo: do not return null, use something better
+  def findUser(username: String) : User = {
+    val conf = new SparkConf(true)
+        .set("spark.cassandra.connection.host", "localhost")
+
+    val sc = new SparkContext("local", "cassandra", conf)
+    sc.setLogLevel("ERROR")
+
+    CassandraConnector(conf).withSessionDo{ session =>
+      session.execute("USE socialNetwork")
+
+      println("Looking for username " + username)
+
+      val res = session.execute("SELECT * FROM users WHERE username = \'" + username + "\'").one
+
+      sc.stop()
+
+      if (res != null) {
+        // ToDo: convert updatedOn to java.Instant
+        User(Id[User](res.getUUID("id").toString()), Instant.now(), URI.create(res.getString("image")), res.getString("username"), res.getBool("deleted"))
+      }
+      else {
+        null
+      }
+    }
+  }
+
+  def addUser(user: User) : Boolean = {
+    val conf = new SparkConf(true)
+        .set("spark.cassandra.connection.host", "localhost")
+
+    val sc = new SparkContext("local", "cassandra", conf)
+    sc.setLogLevel("ERROR")
+
+    CassandraConnector(conf).withSessionDo{ session =>
+      val req = session.execute("SELECT * FROM users WHERE username = \'" + user.username + "\'").one
+      sc.stop
+      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), toDate(now()), \'"
+                                         + user.image.toString + "\', \'"
+                                         + user.username + "\', " + user.deleted + " )").wasApplied
+    }
+  }
+
 }
