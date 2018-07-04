@@ -25,17 +25,44 @@ object CassandraDB {
 
     // creating the database
     CassandraConnector(conf).withSessionDo { session =>
+
       // create keyspace here instead later on ..
       session.execute("DROP KEYSPACE IF EXISTS socialNetwork")
       session.execute("CREATE KEYSPACE socialNetwork WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1 }")
 
       session.execute("USE socialNetwork")
 
-      // create Table users
+      /* USERS */
       session.execute("DROP TABLE IF EXISTS users")
       session.execute("CREATE TABLE users(id TIMEUUID, updatedOn text, image text, username text, deleted boolean, PRIMARY KEY(username));")
 
+      /* MESSAGES */
+      session.execute("DROP TABLE IF EXISTS messages")
+      session.execute("CREATE TABLE messages(id TIMEUUID, updatedOn text, author TIMEUUID, dest TIMEUUID, text text, deleted boolean, PRIMARY KEY(id));")
+
+      /* POSTS */
+      session.execute("DROP TABLE IF EXISTS posts")
+      session.execute("CREATE TABLE posts(id TIMEUUID, updatedOn text, author TIMEUUID, text text, image text, deleted boolean, PRIMARY KEY (id));")
+
+      /* COMMENTS */
+      session.execute("DROP TABLE IF EXISTS comments")
+      session.execute("CREATE TABLE comments(id TIMEUUID, updatedOn text, postID TIMEUUID, author TIMEUUID, text text, deleted boolean, PRIMARY KEY (id));")
+    }
+
+    sc.stop()
+  }
+
+  def addExamples() = {
+    val conf = new SparkConf(true)
+        .set("spark.cassandra.connection.host", "localhost")
+
+    val sc = new SparkContext("local", "cassandra", conf)
+    sc.setLogLevel("ERROR")
+
+    // creating the database
+    CassandraConnector(conf).withSessionDo { session =>
       val today = Instant.now()
+
       // inserting examples for table users
       session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), \'" + today + "\', 'http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png', 'Garfounkel', false)")
       session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), \'" + today + "\', '', 'barthiex', false)")
@@ -43,34 +70,27 @@ object CassandraDB {
       session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), \'" + today + "\', '', 'Karim', false)")
       session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), \'" + today + "\', '', 'Nicolas', false)")
 
-      session.execute("DROP TABLE IF EXISTS posts")
-      session.execute("CREATE TABLE posts(id TIMEUUID, updatedOn text, author TIMEUUID, text text, image text, deleted boolean, PRIMARY KEY (id));")
 
       val user0 = session.execute("SELECT * FROM users WHERE username = 'Garfounkel'")
-      if (!user0.isExhausted)
-      {
+      if (!user0.isExhausted) {
         // inserting examples for table posts
         session.execute("INSERT INTO posts(id, updatedOn, author, text, image, deleted) VALUES (now(), \'" + today + "\', " + user0.one.getUUID("id") + " ,'Some Text', 'http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png', false)")
       }
 
-      session.execute("DROP TABLE IF EXISTS comments")
-      session.execute("CREATE TABLE comments(id TIMEUUID, updatedOn text, postID TIMEUUID, author TIMEUUID, text text, deleted boolean, PRIMARY KEY (id));")
 
       // because user0.one exhausted user0, since there is only one element
       val user1 = session.execute("SELECT * FROM users WHERE username = 'Garfounkel'")
-      if (!user1.isExhausted)
-      {
+      if (!user1.isExhausted) {
         val authorID = user1.one.getUUID("id")
         val post0 = session.execute("SELECT * FROM posts WHERE author = " + authorID + "ALLOW FILTERING")
-        if (!post0.isExhausted)
-        {
+        if (!post0.isExhausted) {
           // inserting examples for table posts
           session.execute("INSERT INTO comments(id, updatedOn, postID, author, text, deleted) VALUES (now(), \'" + today + "\', " + authorID + ", " + post0.one.getUUID("id") + " ,'Some Text', false)")
         }
       }
     }
 
-    sc.stop()
+    sc.stop
   }
 
   // ToDo: do not return null, use something better
@@ -161,7 +181,7 @@ object CassandraDB {
       }
     }
 
-    def addComments(comment : Comment) : Boolean = {
+    def addComment(comment : Comment) : Boolean = {
       val conf = new SparkConf(true)
           .set("spark.cassandra.connection.host", "localhost")
 
@@ -175,4 +195,5 @@ object CassandraDB {
                          + comment.text +  "\', " + comment.deleted + ")").wasApplied
       }
     }
+
 }
