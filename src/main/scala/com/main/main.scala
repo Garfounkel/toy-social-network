@@ -8,12 +8,11 @@ import com.cassandra._
 import java.net.URI
 
 import java.util.Properties
+import java.util.Collections._
 
 import org.json4s._
 import org.json4s.native.Serialization
 import org.json4s.native.Serialization.{read, write}
-
-// import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord, ProducerConfig}
 
 import java.time.Instant
 import java.time.format.DateTimeFormatter
@@ -32,21 +31,18 @@ object Main {
     val uri = URI.create("http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png")
 
     val post = Post(Id("post6"), Instant.now(), Id("user0"), "Some Text", uri, false)
-    println(post)
-
     val user = User(Id("user6"), Instant.now(), uri, "Garfounkel", false)
-    println(user)
-
     val comment = Comment(Id("com6"), Id("post0"), Instant.now(), Id("user0"), "Some Text", false)
-    println(comment)
 
     val producer = KafkaMultiProducer()
-
-    producer.send(post)
     producer.send(user)
-    producer.send(comment)
-
     producer.close()
+
+    val consumer = CustomKafkaConsumer[User]()
+    val usersFromTopic = consumer.readFromBegining[User]()
+    consumer.close()
+
+    // println(usersFromTopic)
 
     // CassandraDB.createDB()
 

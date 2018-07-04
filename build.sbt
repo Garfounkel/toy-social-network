@@ -15,10 +15,3 @@ libraryDependencies += "com.datastax.spark" %% "spark-cassandra-connector" % "2.
 libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.0.0"
 libraryDependencies += "org.apache.kafka" % "kafka-streams" % kafkaVersion
 libraryDependencies += "org.apache.kafka" % "kafka-clients" % kafkaVersion
-
-// If you want to activate the log4j.properties file:
-// fork in run := true
-// javaOptions in run ++= Seq(
-//   "-Dlog4j.debug=true",
-//   "-Dlog4j.configuration=log4j.properties")
-// outputStrategy := Some(StdoutOutput)
