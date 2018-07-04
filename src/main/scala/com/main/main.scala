@@ -30,9 +30,9 @@ object Main {
 
     val uri = URI.create("http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png")
 
-    val post = Post(Id("post6"), Instant.now(), Id("user0"), "Some Text", uri, false)
-    val user = User(Id("user6"), Instant.now(), uri, "Garfounkel", false)
-    val comment = Comment(Id("com6"), Id("post0"), Instant.now(), Id("user0"), "Some Text", false)
+    val post = Post(Id("post6"), Instant.now(), Id("Garfounkel"), "Some Text", uri, false)
+    val user = User(Id("Garfounkel"), Instant.now(), uri, false)
+    val comment = Comment(Id("com6"), Id("post0"), Instant.now(), Id("Garfounkel"), "Some Text", false)
 
     val producer = KafkaMultiProducer()
     producer.send(user)
@@ -42,7 +42,7 @@ object Main {
     val usersFromTopic = consumer.readFromBegining[User]()
     consumer.close()
 
-    // println(usersFromTopic)
+    println(usersFromTopic)
 
     // CassandraDB.createDB()
 
