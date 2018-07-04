@@ -34,19 +34,19 @@ object CassandraDB {
 
       /* USERS */
       session.execute("DROP TABLE IF EXISTS users")
-      session.execute("CREATE TABLE users(id TIMEUUID, updatedOn text, image text, username text, deleted boolean, PRIMARY KEY(username));")
+      session.execute("CREATE TABLE users(id text, updatedOn text, image text, deleted boolean, PRIMARY KEY(id));")
 
       /* MESSAGES */
       session.execute("DROP TABLE IF EXISTS messages")
-      session.execute("CREATE TABLE messages(id TIMEUUID, updatedOn text, author TIMEUUID, dest TIMEUUID, text text, deleted boolean, PRIMARY KEY(id));")
+      session.execute("CREATE TABLE messages(id TIMEUUID, updatedOn text, author text, dest text, text text, deleted boolean, PRIMARY KEY(id));")
 
       /* POSTS */
       session.execute("DROP TABLE IF EXISTS posts")
-      session.execute("CREATE TABLE posts(id TIMEUUID, updatedOn text, author TIMEUUID, text text, image text, deleted boolean, PRIMARY KEY (id));")
+      session.execute("CREATE TABLE posts(id TIMEUUID, updatedOn text, author text, text text, image text, deleted boolean, PRIMARY KEY (id));")
 
       /* COMMENTS */
       session.execute("DROP TABLE IF EXISTS comments")
-      session.execute("CREATE TABLE comments(id TIMEUUID, updatedOn text, postID TIMEUUID, author TIMEUUID, text text, deleted boolean, PRIMARY KEY (id));")
+      session.execute("CREATE TABLE comments(id TIMEUUID, updatedOn text, postID text, author text, text text, deleted boolean, PRIMARY KEY (id));")
     }
 
     sc.stop()
@@ -64,14 +64,14 @@ object CassandraDB {
       val today = Instant.now()
 
       // inserting examples for table users
-      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), \'" + today + "\', 'http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png', 'Garfounkel', false)")
-      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), \'" + today + "\', '', 'barthiex', false)")
-      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), \'" + today + "\', 'http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png', 'Simon', false)")
-      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), \'" + today + "\', '', 'Karim', false)")
-      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), \'" + today + "\', '', 'Nicolas', false)")
+      session.execute("INSERT INTO users(id, updatedOn, image, deleted) VALUES ()'Garfounkel', \'" + today + "\', 'http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png', false)")
+      session.execute("INSERT INTO users(id, updatedOn, image, deleted) VALUES ('barthiex', \'" + today + "\', '', false)")
+      session.execute("INSERT INTO users(id, updatedOn, image, deleted) VALUES ('Simon', \'" + today + "\', 'http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png', false)")
+      session.execute("INSERT INTO users(id, updatedOn, image, deleted) VALUES ('Karim', \'" + today + "\', '', false)")
+      session.execute("INSERT INTO users(id, updatedOn, image, deleted) VALUES ('Nicolas', \'" + today + "\', '', false)")
 
 
-      val user0 = session.execute("SELECT * FROM users WHERE username = 'Garfounkel'")
+      val user0 = session.execute("SELECT * FROM users WHERE id = 'Garfounkel'")
       if (!user0.isExhausted) {
         // inserting examples for table posts
         session.execute("INSERT INTO posts(id, updatedOn, author, text, image, deleted) VALUES (now(), \'" + today + "\', " + user0.one.getUUID("id") + " ,'Some Text', 'http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png', false)")
@@ -79,7 +79,7 @@ object CassandraDB {
 
 
       // because user0.one exhausted user0, since there is only one element
-      val user1 = session.execute("SELECT * FROM users WHERE username = 'Garfounkel'")
+      val user1 = session.execute("SELECT * FROM users WHERE id = 'Garfounkel'")
       if (!user1.isExhausted) {
         val authorID = user1.one.getUUID("id")
         val post0 = session.execute("SELECT * FROM posts WHERE author = " + authorID + "ALLOW FILTERING")
@@ -94,7 +94,7 @@ object CassandraDB {
   }
 
   // ToDo: do not return null, use something better
-  def findUser(username: String) : User = {
+  def findUser(id: String) : User = {
     val conf = new SparkConf(true)
         .set("spark.cassandra.connection.host", "localhost")
 
@@ -104,16 +104,16 @@ object CassandraDB {
     CassandraConnector(conf).withSessionDo{ session =>
       session.execute("USE socialNetwork")
 
-      val res = session.execute("SELECT * FROM users WHERE username = \'" + username + "\'").one
+      val res = session.execute("SELECT * FROM users WHERE id = \'" + id + "\'").one
 
       sc.stop()
 
       if (res != null) {
         // ToDo: convert updatedOn to java.Instant
-        User(Id[User](res.getUUID("id").toString()),
+        User(Id[User](res.getString("id")),
              Instant.parse(res.getString("updatedOn")),
              URI.create(res.getString("image")),
-             res.getString("username"),
+             res.getString("id"),
              res.getBool("deleted"))
       }
       else {
@@ -131,16 +131,15 @@ object CassandraDB {
 
     CassandraConnector(conf).withSessionDo{ session =>
       sc.stop
-      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), \'" + user.updatedOn.toString() + "\', \'"
-                                         + user.image.toString + "\', \'"
-                                         + user.username + "\', " + user.deleted + " )").wasApplied
+      session.execute("INSERT INTO users(id, updatedOn, image, deleted) VALUES (\' " + user.id.value + "\', \'" + user.updatedOn.toString() + "\', \'"
+                                         + user.image.toString + "\', " + user.deleted + " )").wasApplied
     }
   }
 
 
     // ToDo: while results; add to list
     def findPostsFromUser(user: User) : List[Post] = {
-      val uuid = user.id.value
+      val id = user.id.value
 
       val conf = new SparkConf(true)
           .set("spark.cassandra.connection.host", "localhost")
@@ -149,7 +148,7 @@ object CassandraDB {
       sc.setLogLevel("ERROR")
 
       val req = CassandraConnector(conf).withSessionDo{ session =>
-        session.execute("SELECT * FROM posts WHERE author = " + uuid + " ALLOW FILTERING").all().asScala.toList
+        session.execute("SELECT * FROM posts WHERE author = " + id + " ALLOW FILTERING").all().asScala.toList
       }
 
       def fill(req : List[com.datastax.driver.core.Row], postList : List[Post]) : List[Post] = req match {
