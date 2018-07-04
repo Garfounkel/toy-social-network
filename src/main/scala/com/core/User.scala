@@ -7,7 +7,6 @@ import com.kafka._
 case class User(id: Id[User],
                 updatedOn: Instant,
                 image: URI,
-                username: String,
                 deleted: Boolean)
 
 object User {
