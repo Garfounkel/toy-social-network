@@ -6,6 +6,8 @@ import org.apache.spark.rdd.RDD
 import com.datastax.spark.connector._
 import com.datastax.spark.connector.cql._
 
+import scala.collection.JavaConverters._
+
 import java.net.URI
 
 import java.time.Instant
@@ -31,27 +33,28 @@ object CassandraDB {
 
       // create Table users
       session.execute("DROP TABLE IF EXISTS users")
-      session.execute("CREATE TABLE users(id TIMEUUID, updatedOn date, image text, username text, deleted boolean, PRIMARY KEY(username));")
+      session.execute("CREATE TABLE users(id TIMEUUID, updatedOn text, image text, username text, deleted boolean, PRIMARY KEY(username));")
 
+      val today = Instant.now()
       // inserting examples for table users
-      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), toDate(now()), 'http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png', 'Garfounkel', false)")
-      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), toDate(now()), '', 'barthiex', false)")
-      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), toDate(now()), 'http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png', 'Simon', false)")
-      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), toDate(now()), '', 'Karim', false)")
-      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), toDate(now()), '', 'Nicolas', false)")
+      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), \'" + today + "\', 'http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png', 'Garfounkel', false)")
+      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), \'" + today + "\', '', 'barthiex', false)")
+      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), \'" + today + "\', 'http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png', 'Simon', false)")
+      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), \'" + today + "\', '', 'Karim', false)")
+      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), \'" + today + "\', '', 'Nicolas', false)")
 
       session.execute("DROP TABLE IF EXISTS posts")
-      session.execute("CREATE TABLE posts(id TIMEUUID, updatedOn date, author TIMEUUID, text text, image text, deleted boolean, PRIMARY KEY (id));")
+      session.execute("CREATE TABLE posts(id TIMEUUID, updatedOn text, author TIMEUUID, text text, image text, deleted boolean, PRIMARY KEY (id));")
 
       val user0 = session.execute("SELECT * FROM users WHERE username = 'Garfounkel'")
       if (!user0.isExhausted)
       {
         // inserting examples for table posts
-        session.execute("INSERT INTO posts(id, updatedOn, author, text, image, deleted) VALUES (now(), toDate(now()), " + user0.one.getUUID("id") + " ,'Some Text', 'http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png', false)")
+        session.execute("INSERT INTO posts(id, updatedOn, author, text, image, deleted) VALUES (now(), \'" + today + "\', " + user0.one.getUUID("id") + " ,'Some Text', 'http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png', false)")
       }
 
       session.execute("DROP TABLE IF EXISTS comments")
-      session.execute("CREATE TABLE comments(id TIMEUUID, updatedOn date, postID TIMEUUID, author TIMEUUID, text text, deleted boolean, PRIMARY KEY (id));")
+      session.execute("CREATE TABLE comments(id TIMEUUID, updatedOn text, postID TIMEUUID, author TIMEUUID, text text, deleted boolean, PRIMARY KEY (id));")
 
       // because user0.one exhausted user0, since there is only one element
       val user1 = session.execute("SELECT * FROM users WHERE username = 'Garfounkel'")
@@ -62,7 +65,7 @@ object CassandraDB {
         if (!post0.isExhausted)
         {
           // inserting examples for table posts
-          session.execute("INSERT INTO comments(id, updatedOn, postID, author, text, deleted) VALUES (now(), toDate(now()), " + authorID + ", " + post0.one.getUUID("id") + " ,'Some Text', false)")
+          session.execute("INSERT INTO comments(id, updatedOn, postID, author, text, deleted) VALUES (now(), \'" + today + "\', " + authorID + ", " + post0.one.getUUID("id") + " ,'Some Text', false)")
         }
       }
     }
@@ -81,15 +84,17 @@ object CassandraDB {
     CassandraConnector(conf).withSessionDo{ session =>
       session.execute("USE socialNetwork")
 
-      println("Looking for username " + username)
-
       val res = session.execute("SELECT * FROM users WHERE username = \'" + username + "\'").one
 
       sc.stop()
 
       if (res != null) {
         // ToDo: convert updatedOn to java.Instant
-        User(Id[User](res.getUUID("id").toString()), Instant.now(), URI.create(res.getString("image")), res.getString("username"), res.getBool("deleted"))
+        User(Id[User](res.getUUID("id").toString()),
+             Instant.parse(res.getString("updatedOn")),
+             URI.create(res.getString("image")),
+             res.getString("username"),
+             res.getBool("deleted"))
       }
       else {
         null
@@ -105,12 +110,69 @@ object CassandraDB {
     sc.setLogLevel("ERROR")
 
     CassandraConnector(conf).withSessionDo{ session =>
-      val req = session.execute("SELECT * FROM users WHERE username = \'" + user.username + "\'").one
       sc.stop
-      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), toDate(now()), \'"
+      session.execute("INSERT INTO users(id, updatedOn, image, username, deleted) VALUES (now(), \'" + user.updatedOn.toString() + "\', \'"
                                          + user.image.toString + "\', \'"
                                          + user.username + "\', " + user.deleted + " )").wasApplied
     }
   }
 
+
+    // ToDo: while results; add to list
+    def findPostsFromUser(user: User) : List[Post] = {
+      val uuid = user.id.value
+
+      val conf = new SparkConf(true)
+          .set("spark.cassandra.connection.host", "localhost")
+
+      val sc = new SparkContext("local", "cassandra", conf)
+      sc.setLogLevel("ERROR")
+
+      val req = CassandraConnector(conf).withSessionDo{ session =>
+        session.execute("SELECT * FROM posts WHERE author = " + uuid + " ALLOW FILTERING").all().asScala.toList
+      }
+
+      def fill(req : List[com.datastax.driver.core.Row], postList : List[Post]) : List[Post] = req match {
+        case elt::req => val post = new Post(Id[Post](elt.getUUID("id").toString),
+                                             Instant.parse(elt.getString("updatedOn")),
+                                             user.id,
+                                             elt.getString("text"),
+                                             URI.create(elt.getString("image")),
+                                             elt.getBool("deleted"))
+                         fill(req, post :: postList)
+        case Nil => postList
+      }
+      sc.stop
+      fill(req, List())
+    }
+
+    def addPost(post : Post) : Boolean = {
+      val conf = new SparkConf(true)
+          .set("spark.cassandra.connection.host", "localhost")
+
+      val sc = new SparkContext("local", "cassandra", conf)
+      sc.setLogLevel("ERROR")
+
+      CassandraConnector(conf).withSessionDo{ session =>
+        sc.stop
+        session.execute("INSERT INTO posts(id, updatedOn, author, text, image, deleted) VALUES (now(), \'"
+                         + post.updatedOn.toString() + "\', " + post.author + ", \'"
+                         + post.text +  "\', \'" + post.image.toString + "\', " + post.deleted + ")").wasApplied
+      }
+    }
+
+    def addComments(comment : Comment) : Boolean = {
+      val conf = new SparkConf(true)
+          .set("spark.cassandra.connection.host", "localhost")
+
+      val sc = new SparkContext("local", "cassandra", conf)
+      sc.setLogLevel("ERROR")
+
+      CassandraConnector(conf).withSessionDo{ session =>
+        sc.stop
+        session.execute("INSERT INTO comments(id, updatedOn, postID, author, text, deleted) VALUES (now(), \'"
+                         + comment.updatedOn.toString() + "\', " + comment.postId.value + ", " + comment.author.value + ", \'"
+                         + comment.text +  "\', " + comment.deleted + ")").wasApplied
+      }
+    }
 }

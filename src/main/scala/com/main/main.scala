@@ -68,6 +68,7 @@ object Main {
     commentProducer.close()
 
     // CassandraDB.createDB()
+
     println("\n------ Exit ------")
   }
 }
