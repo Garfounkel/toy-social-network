@@ -102,50 +102,68 @@ object CassandraDB {
     }
   }
 
+  // ToDo: while results; add to list
+  def findPostsFromUser(user: User) : List[Post] = {
+    val id = user.id.value
+
+    val req = CassandraConnector(conf).withSessionDo{ session =>
+      session.execute("SELECT * FROM posts WHERE author = " + id + " ALLOW FILTERING").all().asScala.toList
+    }
+
+    def fill(req : List[com.datastax.driver.core.Row], postList : List[Post]) : List[Post] = req match {
+      case elt::req => val post = new Post(Id[Post](elt.getUUID("id").toString),
+                                           Instant.parse(elt.getString("updatedOn")),
+                                           user.id,
+                                           elt.getString("text"),
+                                           URI.create(elt.getString("image")),
+                                           elt.getBool("deleted"))
+                       fill(req, post :: postList)
+      case Nil => postList
+    }
+    fill(req, List())
+  }
+
+
   def addUser(user: User) : Boolean = {
     CassandraConnector(conf).withSessionDo{ session =>
+      session.execute("USE socialNetwork")
       session.execute("INSERT INTO users(id, updatedOn, image, deleted) VALUES (\' " + user.id.value + "\', \'" + user.updatedOn.toString() + "\', \'"
                                          + user.image.toString + "\', " + user.deleted + " )").wasApplied
     }
   }
 
-
-    // ToDo: while results; add to list
-    def findPostsFromUser(user: User) : List[Post] = {
-      val id = user.id.value
-
-      val req = CassandraConnector(conf).withSessionDo{ session =>
-        session.execute("SELECT * FROM posts WHERE author = " + id + " ALLOW FILTERING").all().asScala.toList
-      }
-
-      def fill(req : List[com.datastax.driver.core.Row], postList : List[Post]) : List[Post] = req match {
-        case elt::req => val post = new Post(Id[Post](elt.getUUID("id").toString),
-                                             Instant.parse(elt.getString("updatedOn")),
-                                             user.id,
-                                             elt.getString("text"),
-                                             URI.create(elt.getString("image")),
-                                             elt.getBool("deleted"))
-                         fill(req, post :: postList)
-        case Nil => postList
-      }
-      fill(req, List())
-    }
-
-    def addPost(post : Post) : Boolean = {
+  def addPost(post : Post) : Boolean = {
       CassandraConnector(conf).withSessionDo{ session =>
+        session.execute("USE socialNetwork")
         session.execute("INSERT INTO posts(id, updatedOn, author, text, image, deleted) VALUES (now(), \'"
                          + post.updatedOn.toString() + "\', " + post.author + ", \'"
                          + post.text +  "\', \'" + post.image.toString + "\', " + post.deleted + ")").wasApplied
-      }
     }
+  }
 
-    def addComment(comment : Comment) : Boolean = {
-      CassandraConnector(conf).withSessionDo{ session =>
-        session.execute("INSERT INTO comments(id, updatedOn, postID, author, text, deleted) VALUES (now(), \'"
-                         + comment.updatedOn.toString() + "\', " + comment.postId.value + ", " + comment.author.value + ", \'"
-                         + comment.text +  "\', " + comment.deleted + ")").wasApplied
-      }
+  def addComment(comment : Comment) : Boolean = {
+    CassandraConnector(conf).withSessionDo{ session =>
+      session.execute("USE socialNetwork")
+      session.execute("INSERT INTO comments(id, updatedOn, postID, author, text, deleted) VALUES (now(), \'"
+                       + comment.updatedOn.toString() + "\', " + comment.postId.value + ", " + comment.author.value + ", \'"
+                       + comment.text +  "\', " + comment.deleted + ")").wasApplied
     }
+  }
 
-    sc.stop
+  def addMessage(message : Message) : Boolean = {
+    CassandraConnector(conf).withSessionDo{ session =>
+      session.execute("USE KEYSPACE socialNetwork")
+      session.execute("INSERT INTO message(id, updatedOn, author, dest, text, deleted) VALUES (now(), \'"
+                       + message.updatedOn.toString() + "\', " + message.from.value + ", " +  message.to.value + ", \'"
+                       + message.text +  "\', " + message.deleted + ")").wasApplied
+    }
+  }
+
+  def add[T](obj : T) : Boolean = obj match {
+    case u : User => addUser(u)
+    case m : Message => addMessage(m)
+    case p : Post => addPost(p)
+  }
+
+  sc.stop
 }
