@@ -51,23 +51,41 @@ object Main {
     // commentProducer.send(comment)
     // commentProducer.close()
 
+    println("------ Main ------\n")
+
     // consumer goes here
     if (args.size > 0 && args(0) == "listener") {
-    val groupId = "group"
-    val brokers = "localhost:9092"
+      val groupId = "group"
+      val brokers = "localhost:9092"
 
-    val consumer_users = new ConsumerExecutor[User](brokers, groupId + 1)
-    consumer_users.run()
+      val consumer_users = new ConsumerExecutor[User](brokers, groupId + 1)
+      consumer_users.run()
 
-    val consumer_messages = new ConsumerExecutor[Message](brokers, groupId + 2)
-    consumer_messages.run()
+      val consumer_msgs = new ConsumerExecutor[Message](brokers, groupId + 2)
+      consumer_msgs.run()
 
-    val consumer_posts = new ConsumerExecutor[Post](brokers, groupId + 3)
-    consumer_posts.run()
+      val consumer_posts = new ConsumerExecutor[Post](brokers, groupId + 3)
+      consumer_posts.run()
+
+      breakable {
+        println()
+        while (true) {
+          println("Listening on multiple topics: users, posts and messages...")
+          println("Enter exit to safely shutdown all threads and consumers.")
+          print("> ")
+          val input = scala.io.StdIn.readLine()
+          if (input == "exit") {
+            consumer_users.shutdown()
+            consumer_msgs.shutdown()
+            consumer_posts.shutdown()
+          }
+          else {
+            println("Unknown operation\n")
+          }
+        }
+      }
     }
     else { // if its not a consumer, then start the shell
-      println("------ Main ------\n")
-
       breakable {
         while (true) {
           println("Enter the operation you need (query/produce)")
