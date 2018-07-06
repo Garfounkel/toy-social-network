@@ -113,7 +113,6 @@ object CassandraDB {
         User(Id[User](res.getString("id")),
              Instant.parse(res.getString("updatedOn")),
              URI.create(res.getString("image")),
-             res.getString("id"),
              res.getBool("deleted"))
       }
       else {
