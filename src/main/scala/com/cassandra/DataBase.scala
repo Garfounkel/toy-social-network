@@ -109,7 +109,6 @@ object CassandraDB {
       sc.stop()
 
       if (res != null) {
-        // ToDo: convert updatedOn to java.Instant
         User(Id[User](res.getString("id")),
              Instant.parse(res.getString("updatedOn")),
              URI.create(res.getString("image")),
