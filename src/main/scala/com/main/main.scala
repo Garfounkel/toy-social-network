@@ -30,7 +30,6 @@ object Main {
 
   def main(args: Array[String]) {
 
-    println("------ Main ------\n")
 
     /*val uri = URI.create("http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png")
 
@@ -54,19 +53,21 @@ object Main {
 
     // consumer goes here
     if (args.size > 0 && args(0) == "listener") {
-      val groupId = "group"
-      val brokers = "localhost:9092"
+    val groupId = "group"
+    val brokers = "localhost:9092"
 
-      val consumer_users = new ConsumerExecutor(brokers, groupId + 1, "users")
-      consumer_users.run()
+    val consumer_users = new ConsumerExecutor[User](brokers, groupId + 1)
+    consumer_users.run()
 
-      val consumer_messages = new ConsumerExecutor(brokers, groupId + 2, "messages")
-      consumer_messages.run()
+    val consumer_messages = new ConsumerExecutor[Message](brokers, groupId + 2)
+    consumer_messages.run()
 
-      val consumer_posts = new ConsumerExecutor(brokers, groupId + 3, "posts")
-      consumer_posts.run()
+    val consumer_posts = new ConsumerExecutor[Post](brokers, groupId + 3)
+    consumer_posts.run()
     }
     else { // if its not a consumer, then start the shell
+      println("------ Main ------\n")
+
       breakable {
         while (true) {
           println("Enter the operation you need (query/produce)")
@@ -88,8 +89,8 @@ object Main {
           }
         }
       }
-    }
 
-    println("\n------ Exit ------")
+      println("\n------ Exit ------")
+    }
   }
 }
