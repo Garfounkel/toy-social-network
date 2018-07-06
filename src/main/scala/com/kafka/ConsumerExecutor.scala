@@ -19,9 +19,9 @@ import java.time.Instant
 import java.time.format.DateTimeFormatter
 import com.github.kardapoltsev.json4s.javatime.{InstantSerializer}
 
-class ConsumerExecutor(val brokers: String,
-                       val groupId: String,
-                       val topic: String) {
+class ConsumerExecutor[V](val brokers: String,
+                          val groupId: String)
+                         (implicit topic: Topic[V], m: Manifest[V]) {
 
   val props = createConsumerConfig(brokers, groupId)
   val consumer = new KafkaConsumer[String, String](props)
@@ -50,7 +50,7 @@ class ConsumerExecutor(val brokers: String,
                          InstantSerializer +
                          UriSerializer
   def run() = {
-    consumer.subscribe(Collections.singletonList(this.topic))
+    consumer.subscribe(Collections.singletonList(this.topic.value))
 
     Executors.newSingleThreadExecutor.execute(new Runnable {
       override def run(): Unit = {
@@ -58,10 +58,12 @@ class ConsumerExecutor(val brokers: String,
           val records = consumer.poll(1000)
 
           for (record <- records) {
-            System.out.println("Received message: (" +
-                                record.key() + ", " +
-                                record.value() +
-                                ") at offset " + record.offset())
+            println("Received message: (" +
+                     record.key() + ", " +
+                     record.value() +
+                     ") at offset " + record.offset())
+            val obj = read[V](record.value)
+            println(obj)
           }
         }
       }
