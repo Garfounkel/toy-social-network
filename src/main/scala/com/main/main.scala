@@ -29,13 +29,14 @@ object Main {
 
 
   def main(args: Array[String]) {
+
     println("------ Main ------\n")
 
-    val uri = URI.create("http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png")
+    /* val uri = URI.create("http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png")
 
     val post = Post(Id("post6"), Instant.now(), Id("Garfounkel"), "Some Text", uri, false)
     val user = User(Id("Garfounkel"), Instant.now(), uri, false)
-    val comment = Comment(Id("com6"), Id("post0"), Instant.now(), Id("Garfounkel"), "Some Text", false)
+    val comment = Comment(Id("com6"), Id("post0"), Instant.now(), Id("Garfounkel"), "Some Text", false) */
 
     // val postProducer = KafkaMultiProducer()
     // postProducer.send(post)
@@ -49,36 +50,40 @@ object Main {
     // commentProducer.send(comment)
     // commentProducer.close()
 
-    val groupId = "group"
-    val brokers = "localhost:9092"
+    // consumer goes here
+    if (args.size > 0 && args(0) == "listener") {
+      val groupId = "group"
+      val brokers = "localhost:9092"
 
-    val consumer_users = new ConsumerExecutor(brokers, groupId + 1, "users")
-    consumer_users.run()
+      val consumer_users = new ConsumerExecutor(brokers, groupId + 1, "users")
+      consumer_users.run()
 
-    val consumer_messages = new ConsumerExecutor(brokers, groupId + 2, "messages")
-    consumer_messages.run()
+      val consumer_messages = new ConsumerExecutor(brokers, groupId + 2, "messages")
+      consumer_messages.run()
 
-    val consumer_posts = new ConsumerExecutor(brokers, groupId + 3, "posts")
-    consumer_posts.run()
-
-    breakable {
-      while (true) {
-        println("Enter the operation you need (query/produce)")
-        print("> ")
-        val input = scala.io.StdIn.readLine()
-        if (input == "query") {
-          println("What word are you looking for? ")
+      val consumer_posts = new ConsumerExecutor(brokers, groupId + 3, "posts")
+      consumer_posts.run()
+    }
+    else { // if its not a consumer, then start the shell
+      breakable {
+        while (true) {
+          println("Enter the operation you need (query/produce)")
           print("> ")
-          // get input for request again?
-        }
-        else if (input == "produce") {
+          val input = scala.io.StdIn.readLine()
+          if (input == "query") {
+            println("What word are you looking for? ")
+            print("> ")
+            // get input for request again?
+          }
+          else if (input == "produce") {
 
-        }
-        else if (input == "exit") {
-          break
-        }
-        else {
-          println("Unknown operation")
+          }
+          else if (input == "exit") {
+            break
+          }
+          else {
+            println("Unknown operation")
+          }
         }
       }
     }
