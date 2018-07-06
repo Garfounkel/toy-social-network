@@ -16,13 +16,13 @@ import com.core._
 
 object CassandraDB {
 
+  val conf = new SparkConf(true)
+      .set("spark.cassandra.connection.host", "localhost")
+
+  val sc = new SparkContext("local", "cassandra", conf)
+  sc.setLogLevel("ERROR")
+
   def createDB() = {
-    val conf = new SparkConf(true)
-        .set("spark.cassandra.connection.host", "localhost")
-
-    val sc = new SparkContext("local", "cassandra", conf)
-    sc.setLogLevel("ERROR")
-
     // creating the database
     CassandraConnector(conf).withSessionDo { session =>
 
@@ -48,17 +48,9 @@ object CassandraDB {
       session.execute("DROP TABLE IF EXISTS comments")
       session.execute("CREATE TABLE comments(id TIMEUUID, updatedOn text, postID text, author text, text text, deleted boolean, PRIMARY KEY (id));")
     }
-
-    sc.stop()
   }
 
   def addExamples() = {
-    val conf = new SparkConf(true)
-        .set("spark.cassandra.connection.host", "localhost")
-
-    val sc = new SparkContext("local", "cassandra", conf)
-    sc.setLogLevel("ERROR")
-
     // creating the database
     CassandraConnector(conf).withSessionDo { session =>
       val today = Instant.now()
@@ -89,24 +81,14 @@ object CassandraDB {
         }
       }
     }
-
-    sc.stop
   }
 
   // ToDo: do not return null, use something better
   def findUser(id: String) : User = {
-    val conf = new SparkConf(true)
-        .set("spark.cassandra.connection.host", "localhost")
-
-    val sc = new SparkContext("local", "cassandra", conf)
-    sc.setLogLevel("ERROR")
-
     CassandraConnector(conf).withSessionDo{ session =>
       session.execute("USE socialNetwork")
 
       val res = session.execute("SELECT * FROM users WHERE id = \'" + id + "\'").one
-
-      sc.stop()
 
       if (res != null) {
         User(Id[User](res.getString("id")),
@@ -121,14 +103,7 @@ object CassandraDB {
   }
 
   def addUser(user: User) : Boolean = {
-    val conf = new SparkConf(true)
-        .set("spark.cassandra.connection.host", "localhost")
-
-    val sc = new SparkContext("local", "cassandra", conf)
-    sc.setLogLevel("ERROR")
-
     CassandraConnector(conf).withSessionDo{ session =>
-      sc.stop
       session.execute("INSERT INTO users(id, updatedOn, image, deleted) VALUES (\' " + user.id.value + "\', \'" + user.updatedOn.toString() + "\', \'"
                                          + user.image.toString + "\', " + user.deleted + " )").wasApplied
     }
@@ -138,12 +113,6 @@ object CassandraDB {
     // ToDo: while results; add to list
     def findPostsFromUser(user: User) : List[Post] = {
       val id = user.id.value
-
-      val conf = new SparkConf(true)
-          .set("spark.cassandra.connection.host", "localhost")
-
-      val sc = new SparkContext("local", "cassandra", conf)
-      sc.setLogLevel("ERROR")
 
       val req = CassandraConnector(conf).withSessionDo{ session =>
         session.execute("SELECT * FROM posts WHERE author = " + id + " ALLOW FILTERING").all().asScala.toList
@@ -159,19 +128,11 @@ object CassandraDB {
                          fill(req, post :: postList)
         case Nil => postList
       }
-      sc.stop
       fill(req, List())
     }
 
     def addPost(post : Post) : Boolean = {
-      val conf = new SparkConf(true)
-          .set("spark.cassandra.connection.host", "localhost")
-
-      val sc = new SparkContext("local", "cassandra", conf)
-      sc.setLogLevel("ERROR")
-
       CassandraConnector(conf).withSessionDo{ session =>
-        sc.stop
         session.execute("INSERT INTO posts(id, updatedOn, author, text, image, deleted) VALUES (now(), \'"
                          + post.updatedOn.toString() + "\', " + post.author + ", \'"
                          + post.text +  "\', \'" + post.image.toString + "\', " + post.deleted + ")").wasApplied
@@ -179,18 +140,12 @@ object CassandraDB {
     }
 
     def addComment(comment : Comment) : Boolean = {
-      val conf = new SparkConf(true)
-          .set("spark.cassandra.connection.host", "localhost")
-
-      val sc = new SparkContext("local", "cassandra", conf)
-      sc.setLogLevel("ERROR")
-
       CassandraConnector(conf).withSessionDo{ session =>
-        sc.stop
         session.execute("INSERT INTO comments(id, updatedOn, postID, author, text, deleted) VALUES (now(), \'"
                          + comment.updatedOn.toString() + "\', " + comment.postId.value + ", " + comment.author.value + ", \'"
                          + comment.text +  "\', " + comment.deleted + ")").wasApplied
       }
     }
 
+    sc.stop
 }

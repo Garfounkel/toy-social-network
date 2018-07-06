@@ -52,8 +52,8 @@ object Main {
     // commentProducer.send(comment)
     // commentProducer.close()
 
-    //CassandraDB.createDB()
-    //CassandraDB.addUser(user)
+    // CassandraDB.createDB()
+
     breakable {
     while (true) {
       println("Enter the operation you need (query/produce)")
