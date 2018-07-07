@@ -58,3 +58,16 @@ sbt run
 ```
 
 {"id":"user6","updatedOn":"2018-07-04T13:27:38.012Z","image":"http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png","username":"Garfounkel","deleted":false}
+
+## Using the Dockerfile
+You need to install Docker on your machine
+
+To build the docker image:
+```
+docker build -t social
+```
+
+To launch the project within Docker:
+```
+sudo docker run -a stdin -a stdout -i -t social
+```
