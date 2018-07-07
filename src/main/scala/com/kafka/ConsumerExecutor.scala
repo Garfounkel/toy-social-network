@@ -31,7 +31,9 @@ class ConsumerExecutor[V](val brokers: String,
 
   def shutdown() = {
     if (consumer != null)
-      consumer.wakeup();
+      consumer.wakeup()
+    if (executor != null)
+      executor.shutdown()
   }
 
   def createConsumerConfig(brokers: String, groupId: String): Properties = {
@@ -50,33 +52,31 @@ class ConsumerExecutor[V](val brokers: String,
                          InstantSerializer +
                          UriSerializer
   def run() = {
-    try {
       consumer.subscribe(Collections.singletonList(this.topic.value))
 
       Executors.newSingleThreadExecutor.execute(new Runnable {
         override def run(): Unit = {
-          while (true) {
-            val records = consumer.poll(1000)
+          try {
+            while (true) {
+              val records = consumer.poll(1000)
 
-            for (record <- records) {
-              println("Received message: (" +
-                       record.key() + ", " +
-                       record.value() +
-                       ") at offset " + record.offset())
-              val obj = read[V](record.value)
-              println(obj)
-              CassandraDB.add(obj)
+              for (record <- records) {
+                println("Received message: (" +
+                         record.key() + ", " +
+                         record.value() +
+                         ") at offset " + record.offset())
+                val obj = read[V](record.value)
+                println(obj)
+                CassandraDB.add(obj)
+              }
             }
+          } catch {
+            // Ignore exception because we are closing
+            case _: WakeupException =>
+          } finally {
+            consumer.close()
           }
         }
       })
-    } catch {
-      // Ignore exception because we are closing
-      case _: WakeupException =>
-    } finally {
-      // consumer.close()
-      if (executor != null)
-        executor.shutdown()
-    }
   }
 }
