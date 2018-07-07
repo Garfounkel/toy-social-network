@@ -20,6 +20,7 @@ import org.json4s.native.Serialization.{read, write}
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import com.github.kardapoltsev.json4s.javatime.{InstantSerializer}
+import org.apache.kafka.common.errors.WakeupException
 
 
 object Main {
@@ -56,7 +57,7 @@ object Main {
     // consumer goes here
     if (args.size > 0 && args(0) == "listener") {
       // CassandraDB
-      CassandraDB.createDB()
+      // CassandraDB.createDB()
 
       // Consumers
       val groupId = "group"
@@ -83,6 +84,7 @@ object Main {
             consumer_users.shutdown()
             consumer_msgs.shutdown()
             consumer_posts.shutdown()
+            break
           }
           else {
             println("Unknown operation\n")
@@ -115,8 +117,7 @@ object Main {
           }
         }
       }
-
-      println("\n------ Exit ------")
     }
+    println("\n------ Exit ------")
   }
 }

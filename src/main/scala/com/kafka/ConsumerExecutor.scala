@@ -9,6 +9,7 @@ import java.util.{Collections, Properties}
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer}
 import org.apache.kafka.common.serialization.StringDeserializer
+import org.apache.kafka.common.errors.WakeupException
 
 import scala.collection.JavaConversions._
 
@@ -30,9 +31,9 @@ class ConsumerExecutor[V](val brokers: String,
 
   def shutdown() = {
     if (consumer != null)
-      consumer.close();
+      consumer.wakeup()
     if (executor != null)
-      executor.shutdown();
+      executor.shutdown()
   }
 
   def createConsumerConfig(brokers: String, groupId: String): Properties = {
@@ -51,24 +52,31 @@ class ConsumerExecutor[V](val brokers: String,
                          InstantSerializer +
                          UriSerializer
   def run() = {
-    consumer.subscribe(Collections.singletonList(this.topic.value))
+      consumer.subscribe(Collections.singletonList(this.topic.value))
 
-    Executors.newSingleThreadExecutor.execute(new Runnable {
-      override def run(): Unit = {
-        while (true) {
-          val records = consumer.poll(1000)
+      Executors.newSingleThreadExecutor.execute(new Runnable {
+        override def run(): Unit = {
+          try {
+            while (true) {
+              val records = consumer.poll(1000)
 
-          for (record <- records) {
-            println("Received message: (" +
-                     record.key() + ", " +
-                     record.value() +
-                     ") at offset " + record.offset())
-            val obj = read[V](record.value)
-            println(obj)
-            CassandraDB.add(obj)
+              for (record <- records) {
+                println("Received message: (" +
+                         record.key() + ", " +
+                         record.value() +
+                         ") at offset " + record.offset())
+                val obj = read[V](record.value)
+                println(obj)
+                CassandraDB.add(obj)
+              }
+            }
+          } catch {
+            // Ignore exception because we are closing
+            case _: WakeupException =>
+          } finally {
+            consumer.close()
           }
         }
-      }
-    })
+      })
   }
 }
