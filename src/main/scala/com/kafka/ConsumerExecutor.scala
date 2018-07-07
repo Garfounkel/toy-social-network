@@ -1,6 +1,7 @@
 package com.kafka
 
 import com.utils._
+import com.cassandra._
 
 import java.util.concurrent._
 import java.util.{Collections, Properties}
@@ -64,6 +65,7 @@ class ConsumerExecutor[V](val brokers: String,
                      ") at offset " + record.offset())
             val obj = read[V](record.value)
             println(obj)
+            CassandraDB.add(obj)
           }
         }
       }

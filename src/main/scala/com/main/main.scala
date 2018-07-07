@@ -55,6 +55,10 @@ object Main {
 
     // consumer goes here
     if (args.size > 0 && args(0) == "listener") {
+      // CassandraDB
+      CassandraDB.createDB()
+
+      // Consumers
       val groupId = "group"
       val brokers = "localhost:9092"
 
@@ -67,6 +71,7 @@ object Main {
       val consumer_posts = new ConsumerExecutor[Post](brokers, groupId + 3)
       consumer_posts.run()
 
+      // Safely exit consumers
       breakable {
         println()
         while (true) {
