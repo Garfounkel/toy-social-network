@@ -19,8 +19,8 @@ object CassandraDB {
   val conf = new SparkConf(true)
       .set("spark.cassandra.connection.host", "localhost")
 
-  val sc = new SparkContext("local", "cassandra", conf)
-  sc.setLogLevel("ERROR")
+  /*val sc = new SparkContext("local", "cassandra", conf)
+  sc.setLogLevel("ERROR")*/
 
   def createDB() = {
     // creating the database
@@ -102,6 +102,23 @@ object CassandraDB {
     }
   }
 
+  def toHDFS() = {
+
+    val sc = new SparkContext("local", "cassandra", conf)
+    sc.setLogLevel("ERROR")
+
+    sc.cassandraTable[User]("socialNetwork", "users")
+      .saveAsTextFile("hdfs:///localhost/user/hdfs/socialNetwork/users");
+    sc.cassandraTable[User]("socialNetwork", "messages")
+      .saveAsTextFile("hdfs:///localhost/user/hdfs/socialNetwork/messages");
+    sc.cassandraTable[User]("socialNetwork", "posts")
+      .saveAsTextFile("hdfs:///localhost/user/hdfs/socialNetwork/posts");
+    sc.cassandraTable[User]("socialNetwork", "comment")
+      .saveAsTextFile("hdfs:///localhost/user/hdfs/socialNetwork/comments");
+
+    sc.stop
+  }
+
   // ToDo: while results; add to list
   def findPostsFromUser(user: User) : List[Post] = {
     val id = user.id.value
@@ -122,7 +139,6 @@ object CassandraDB {
     }
     fill(req, List())
   }
-
 
   def addUser(user: User) : Boolean = {
     CassandraConnector(conf).withSessionDo{ session =>
@@ -165,5 +181,5 @@ object CassandraDB {
     case p : Post => addPost(p)
   }
 
-  sc.stop
+  //sc.stop
 }

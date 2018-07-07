@@ -93,7 +93,7 @@ object Main {
     else { // if its not a consumer, then start the shell
       breakable {
         while (true) {
-          println("Enter the operation you need (query/produce)")
+          println("Enter the operation you need (query/produce/cachetohdfs)")
           print("> ")
           val input = scala.io.StdIn.readLine()
           if (input == "query") {
@@ -103,6 +103,9 @@ object Main {
           }
           else if (input == "produce") {
 
+          }
+          else if (input == "cachetohdfs") {
+            CassandraDB.toHDFS()
           }
           else if (input == "exit") {
             break
