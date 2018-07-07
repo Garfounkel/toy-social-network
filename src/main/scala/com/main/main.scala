@@ -37,6 +37,7 @@ object Main {
     val post = Post(Id("post6"), Instant.now(), Id("Garfounkel"), "Some Text", uri, false)
     val user = User(Id("Garfounkel"), Instant.now(), uri, false)
     val comment = Comment(Id("com6"), Id("post0"), Instant.now(), Id("Garfounkel"), "Some Text", false)
+    val msg = Message(Id("msg01"), Instant.now(), Id("Garfounkel"), Id("Toto"), "Some message", false)
     CassandraDB.add(user)
     */
 
@@ -53,7 +54,6 @@ object Main {
     // commentProducer.close()
 
     println("------ Main ------\n")
-
     // consumer goes here
     if (args.size > 0 && args(0) == "listener") {
       // CassandraDB

@@ -168,9 +168,9 @@ object CassandraDB {
 
   def addMessage(message : Message) : Boolean = {
     CassandraConnector(conf).withSessionDo{ session =>
-      session.execute("USE KEYSPACE socialNetwork")
-      session.execute("INSERT INTO message(id, updatedOn, author, dest, text, deleted) VALUES (now(), \'"
-                       + message.updatedOn.toString() + "\', " + message.from.value + ", " +  message.to.value + ", \'"
+      session.execute("USE socialNetwork")
+      session.execute("INSERT INTO messages(id, updatedOn, author, dest, text, deleted) VALUES (now(), \'"
+                       + message.updatedOn.toString() + "\', \'" + message.from.value + "\', \'" +  message.to.value + "\', \'"
                        + message.text +  "\', " + message.deleted + ")").wasApplied
     }
   }

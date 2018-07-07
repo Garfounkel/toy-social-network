@@ -14,7 +14,7 @@ import java.util
 import java.nio.charset._
 
 
-case class Message(id: Id[Post],
+case class Message(id: Id[Message],
                 updatedOn: Instant,
                 from: Id[User],
                 to: Id[User],
