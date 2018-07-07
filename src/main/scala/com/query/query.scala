@@ -37,6 +37,10 @@ object Query {
 
   val pathToFile = ""
 
+  implicit val formats = Serialization.formats(NoTypeHints) +
+                         InstantSerializer +
+                         UriSerializer
+
   def StringToMessage(str: String): Message = read[Message](str)
 
   def LoadMessages(): RDD[Message] = {
@@ -44,6 +48,6 @@ object Query {
   }
 
   def SearchMessages(query: String): RDD[String] = {
-    loadData.filter(x => x.text contains query)
+    LoadMessages.filter(_.text contains query)
   }
 }
