@@ -16,6 +16,7 @@ import org.json4s.native.Serialization.{read, write}
 // import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord, ProducerConfig}
 
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.time.format.DateTimeFormatter
 import com.github.kardapoltsev.json4s.javatime.{InstantSerializer}
 import org.apache.kafka.common.errors.WakeupException
@@ -41,13 +42,23 @@ object Query {
                          InstantSerializer +
                          UriSerializer
 
-  def StringToMessage(str: String): Message = read[Message](str)
-
   def LoadMessages(): RDD[Message] = {
-    sc.textFile(pathToFile).flatMap(StringToMessage)
+    sc.textFile(pathToFile).map(read[Message])
   }
 
-  def SearchMessages(query: String): RDD[String] = {
+  def SearchMessages(query: String): RDD[Message] = {
     LoadMessages.filter(_.text contains query)
+  }
+
+  def LoadPosts(): RDD[Post] = {
+    sc.textFile(pathToFile).map(read[Post])
+  }
+
+  def SearchPosts(query: String): RDD[Post] = {
+    LoadPosts.filter(_.text contains query)
+  }
+
+  def SearchMessagesSince(query: String, timevalue: Int, unit: ChronoUnit): RDD[Message] = {
+    SearchMessages(query).filter(_.updatedOn isAfter Instant.now().minus(timevalue, unit))
   }
 }
