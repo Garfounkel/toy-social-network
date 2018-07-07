@@ -18,6 +18,10 @@ Assuming kafka (port 9092) and zookeeper (port 2181) servers are up and running:
 Created topic "posts".
 ```
 
+To send message on topic user through Kafka :
+```
+> sudo kafka-console-producer.sh --broker-list localhost:9092 --topic users
+```
 Check that the topic has been created:
 ```
 > kafka-topics.sh --list --zookeeper localhost:2181
@@ -42,3 +46,15 @@ Or, use this file this way:
 ```
 > cqlsh -f src/main/scala/core/cassandra/create_users.cql
 ```
+
+To launch the program on listener mode:
+```
+sbt "run listener"
+```
+
+To launch the program on shell mode (usefull to search words in database):
+```
+sbt run
+```
+
+{"id":"user6","updatedOn":"2018-07-04T13:27:38.012Z","image":"http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png","username":"Garfounkel","deleted":false}

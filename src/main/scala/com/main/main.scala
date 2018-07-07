@@ -56,7 +56,7 @@ object Main {
     // consumer goes here
     if (args.size > 0 && args(0) == "listener") {
       // CassandraDB
-      CassandraDB.createDB()
+      // CassandraDB.createDB()
 
       // Consumers
       val groupId = "group"
@@ -112,8 +112,7 @@ object Main {
           }
         }
       }
-
-      println("\n------ Exit ------")
     }
+    println("\n------ Exit ------")
   }
 }
