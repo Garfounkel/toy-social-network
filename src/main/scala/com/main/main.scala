@@ -30,9 +30,8 @@ object Main {
 
 
   def main(args: Array[String]) {
-
-
-    /*val uri = URI.create("http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png")
+    /*
+    val uri = URI.create("http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png")
 
     val post = Post(Id("post6"), Instant.now(), Id("Garfounkel"), "Some Text", uri, false)
     val user = User(Id("Garfounkel"), Instant.now(), uri, false)
@@ -41,83 +40,76 @@ object Main {
     CassandraDB.add(user)
     */
 
-    // val postProducer = KafkaMultiProducer()
-    // postProducer.send(post)
-    // postProducer.close()
-    //
-    // val userProducer = KafkaMultiProducer()
-    // userProducer.send(user)
-    // userProducer.close()
-    //
-    // val commentProducer = KafkaMultiProducer()
-    // commentProducer.send(comment)
-    // commentProducer.close()
-
     println("------ Main ------\n")
     // consumer goes here
     if (args.size > 0 && args(0) == "listener") {
-      // CassandraDB
-      // CassandraDB.createDB()
-
-      // Consumers
-      val groupId = "group"
-      val brokers = "localhost:9092"
-
-      val consumer_users = new ConsumerExecutor[User](brokers, groupId + 1)
-      consumer_users.run()
-
-      val consumer_msgs = new ConsumerExecutor[Message](brokers, groupId + 2)
-      consumer_msgs.run()
-
-      val consumer_posts = new ConsumerExecutor[Post](brokers, groupId + 3)
-      consumer_posts.run()
-
-      // Safely exit consumers
-      breakable {
-        println()
-        while (true) {
-          println("Listening on multiple topics: users, posts and messages...")
-          println("Enter exit to safely shutdown all threads and consumers.")
-          print("> ")
-          val input = scala.io.StdIn.readLine()
-          if (input == "exit") {
-            consumer_users.shutdown()
-            consumer_msgs.shutdown()
-            consumer_posts.shutdown()
-            break
-          }
-          else {
-            println("Unknown operation\n")
-          }
-        }
-      }
+      Listen()
     }
     else { // if its not a consumer, then start the shell
-      breakable {
-        while (true) {
-          println("Enter the operation you need (query/produce/cachetohdfs)")
-          print("> ")
-          val input = scala.io.StdIn.readLine()
-          if (input == "query") {
-            println("What word are you looking for? ")
-            print("> ")
-            // get input for request again?
-          }
-          else if (input == "produce") {
+      InteractiveQuery()
+    }
+    println("\n------ Exit ------")
+  }
 
-          }
-          else if (input == "cachetohdfs") {
-            CassandraDB.toHDFS()
-          }
-          else if (input == "exit") {
-            break
-          }
-          else {
-            println("Unknown operation")
-          }
+
+  def Listen() = {
+    // CassandraDB
+    // CassandraDB.createDB()
+
+    // Consumers
+    val groupId = "group"
+    val brokers = "localhost:9092"
+
+    val consumer_users = new ConsumerExecutor[User](brokers, groupId + 1)
+    val consumer_msgs = new ConsumerExecutor[Message](brokers, groupId + 2)
+    val consumer_posts = new ConsumerExecutor[Post](brokers, groupId + 3)
+
+    val consumers = List(consumer_users, consumer_msgs, consumer_posts)
+    consumers.foreach(x => x.run())
+
+    // Safely exit consumers
+    breakable {
+      println()
+      while (true) {
+        println("Listening on multiple topics: users, posts and messages...")
+        println("Enter exit to safely shutdown all threads and consumers.")
+        print("> ")
+        val input = scala.io.StdIn.readLine()
+        if (input == "exit") {
+          consumers.foreach(x => x.shutdown())
+          break
+        }
+        else {
+          println("Unknown operation\n")
         }
       }
     }
-    println("\n------ Exit ------")
+  }
+
+  def InteractiveQuery() = {
+    breakable {
+      while (true) {
+        println("Enter the operation you need (query/produce/cachetohdfs)")
+        print("> ")
+        val input = scala.io.StdIn.readLine()
+        if (input == "query") {
+          println("What word are you looking for? ")
+          print("> ")
+          // get input for request again?
+        }
+        else if (input == "produce") {
+
+        }
+        else if (input == "cachetohdfs") {
+          CassandraDB.toHDFS()
+        }
+        else if (input == "exit") {
+          break
+        }
+        else {
+          println("Unknown operation")
+        }
+      }
+    }
   }
 }
