@@ -3,6 +3,7 @@ package com.main
 import com.core._
 import com.utils._
 import com.kafka._
+import com.query._
 import com.cassandra._
 
 import java.net.URI
@@ -36,10 +37,10 @@ object Main {
 
     val post = Post(Id("post6"), Instant.now(), Id("Garfounkel"), "Some Text", uri, false)
     val user = User(Id("Garfounkel"), Instant.now(), uri, false)
-    val comment = Comment(Id("com6"), Id("post0"), Instant.now(), Id("Garfounkel"), "Some Text", false)
+    val comment = Comment(Id("com6"), Id("post0"), Instant.now(), Id("Garfounkel"), "Some Text", false)*/
     val msg = Message(Id("msg01"), Instant.now(), Id("Garfounkel"), Id("Toto"), "Some message", false)
-    CassandraDB.add(user)
-    */
+
+    println(write(msg))
 
     // val postProducer = KafkaMultiProducer()
     // postProducer.send(post)
@@ -56,8 +57,9 @@ object Main {
     println("------ Main ------\n")
     // consumer goes here
     if (args.size > 0 && args(0) == "listener") {
+
       // CassandraDB
-      // CassandraDB.createDB()
+      CassandraDB.createDB()
 
       // Consumers
       val groupId = "group"
@@ -101,7 +103,9 @@ object Main {
           if (input == "query") {
             println("What word are you looking for? ")
             print("> ")
-            // get input for request again?
+            val query = scala.io.StdIn.readLine()
+            val tmp = Query.LoadMessages()
+            tmp.foreach(x => println(x))
           }
           else if (input == "produce") {
 

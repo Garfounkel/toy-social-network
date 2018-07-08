@@ -1,3 +1,5 @@
+package com.query
+
 import com.core._
 import com.utils._
 import com.kafka._
@@ -43,7 +45,11 @@ object Query {
                          UriSerializer
 
   def LoadMessages(): RDD[Message] = {
-    sc.textFile(pathToFile).map(read[Message])
+    val tt = sc.textFile("hdfs://localhost:9000/user/hdfs/socialNetwork/messages")
+    val tmp = tt.map(x => x.slice(12, x.size))
+
+    tmp.foreach(x => println(x))
+    tmp.map(read[Message])
   }
 
   def SearchMessages(query: String): RDD[Message] = {

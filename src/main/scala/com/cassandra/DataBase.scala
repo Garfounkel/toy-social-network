@@ -107,14 +107,12 @@ object CassandraDB {
     val sc = new SparkContext("local", "cassandra", conf)
     sc.setLogLevel("ERROR")
 
-    sc.cassandraTable[User]("socialNetwork", "users")
-      .saveAsTextFile("hdfs:///localhost/user/hdfs/socialNetwork/users");
-    sc.cassandraTable[User]("socialNetwork", "messages")
-      .saveAsTextFile("hdfs:///localhost/user/hdfs/socialNetwork/messages");
-    sc.cassandraTable[User]("socialNetwork", "posts")
-      .saveAsTextFile("hdfs:///localhost/user/hdfs/socialNetwork/posts");
-    sc.cassandraTable[User]("socialNetwork", "comment")
-      .saveAsTextFile("hdfs:///localhost/user/hdfs/socialNetwork/comments");
+    sc.cassandraTable("socialnetwork", "users")
+      .saveAsTextFile("hdfs://localhost:9000/user/hdfs/socialNetwork/users");
+    sc.cassandraTable("socialnetwork", "messages")
+      .saveAsTextFile("hdfs://localhost:9000/user/hdfs/socialNetwork/messages");
+    sc.cassandraTable("socialnetwork", "posts")
+      .saveAsTextFile("hdfs://localhost:9000/user/hdfs/socialNetwork/posts");
 
     sc.stop
   }

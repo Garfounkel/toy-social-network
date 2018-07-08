@@ -57,8 +57,6 @@ To launch the program on shell mode (usefull to search words in database):
 sbt run
 ```
 
-{"id":"user6","updatedOn":"2018-07-04T13:27:38.012Z","image":"http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png","username":"Garfounkel","deleted":false}
-
 ## Using the Dockerfile
 You need to install Docker on your machine
 
