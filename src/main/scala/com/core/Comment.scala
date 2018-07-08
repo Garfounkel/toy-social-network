@@ -3,6 +3,7 @@ package com.core
 import java.time.Instant
 import java.net.URI
 import com.kafka._
+import com.utils._
 
 case class Comment(id: Id[Comment],
                    postId: Id[Post],
