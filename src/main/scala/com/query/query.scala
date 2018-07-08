@@ -79,4 +79,8 @@ object Query {
   def SearchMessagesSince(query: String, timevalue: Int, unit: ChronoUnit): RDD[Message] = {
     SearchMessages(query).filter(_.updatedOn isAfter Instant.now().minus(timevalue, unit))
   }
+
+  def SearchPostsSince(query: String, timevalue: Int, unit: ChronoUnit): RDD[Post] = {
+    SearchPosts(query).filter(_.updatedOn isAfter Instant.now().minus(timevalue, unit))
+  }
 }

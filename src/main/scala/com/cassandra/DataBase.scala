@@ -140,27 +140,6 @@ object CassandraDB {
     sc.stop
   }
 
-  // ToDo: while results; add to list
-  def findPostsFromUser(user: User) : List[Post] = {
-    val id = user.id.value
-
-    val req = CassandraConnector(conf).withSessionDo{ session =>
-      session.execute("SELECT * FROM posts WHERE author = " + id + " ALLOW FILTERING").all().asScala.toList
-    }
-
-    def fill(req : List[com.datastax.driver.core.Row], postList : List[Post]) : List[Post] = req match {
-      case elt::req => val post = new Post(Id[Post](elt.getUUID("id").toString),
-                                           Instant.parse(elt.getString("updatedOn")),
-                                           user.id,
-                                           elt.getString("text"),
-                                           URI.create(elt.getString("image")),
-                                           elt.getBool("deleted"))
-                       fill(req, post :: postList)
-      case Nil => postList
-    }
-    fill(req, List())
-  }
-
   def addUser(user: User) : Boolean = {
     CassandraConnector(conf).withSessionDo{ session =>
       session.execute("USE socialNetwork")
@@ -173,17 +152,8 @@ object CassandraDB {
       CassandraConnector(conf).withSessionDo{ session =>
         session.execute("USE socialNetwork")
         session.execute("INSERT INTO posts(id, updatedOn, author, text, image, deleted) VALUES (now(), \'"
-                         + post.updatedOn.toString() + "\', " + post.author + ", \'"
+                         + post.updatedOn.toString() + "\', \'" + post.author.value + "\', \'"
                          + post.text +  "\', \'" + post.image.toString + "\', " + post.deleted + ")").wasApplied
-    }
-  }
-
-  def addComment(comment : Comment) : Boolean = {
-    CassandraConnector(conf).withSessionDo{ session =>
-      session.execute("USE socialNetwork")
-      session.execute("INSERT INTO comments(id, updatedOn, postID, author, text, deleted) VALUES (now(), \'"
-                       + comment.updatedOn.toString() + "\', " + comment.postId.value + ", " + comment.author.value + ", \'"
-                       + comment.text +  "\', " + comment.deleted + ")").wasApplied
     }
   }
 
