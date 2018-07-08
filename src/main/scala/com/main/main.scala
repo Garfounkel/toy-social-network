@@ -99,9 +99,15 @@ object Main {
           println("What word are you looking for? ")
           print("> ")
           val query = scala.io.StdIn.readLine()
-          val res = Query.SearchMessages(query)
-          println("result of query " + query + ": ")
-          res.foreach(x => println("from: " + x.author.value + ", to: " + x.dest.value + ", message: " + x.text))
+          val messages = Query.SearchMessages(query)
+          val posts = Query.SearchPosts(query)
+
+          println("messages resulting the query " + query + ": ")
+          messages.foreach(x => println("from: " + x.author.value + ", to: " + x.dest.value + ", message: " + x.text))
+
+          println("posts resulting the query " + query + ": ")
+          posts.foreach(x => println("from: " + x.author.value + ", message: " + x.text))
+
         }
         else if (input == "produce") {
         }

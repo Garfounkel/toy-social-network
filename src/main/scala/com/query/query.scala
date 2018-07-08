@@ -61,7 +61,15 @@ object Query {
   }
 
   def LoadPosts(): RDD[Post] = {
-    sc.textFile(pathToFile).map(read[Post])
+    val db = sc.objectFile[CassandraRow]("hdfs://localhost:9000/user/hdfs/socialNetwork/posts")
+    db.map(elt => {
+        Post(Id[Post](""),
+        Instant.parse(elt.getString("updatedon")),
+        Id[User](elt.getString("author")),
+        elt.getString("text"),
+        URI.create(elt.getString("image")),
+        elt.getBoolean("deleted"))
+    })
   }
 
   def SearchPosts(query: String): RDD[Post] = {
