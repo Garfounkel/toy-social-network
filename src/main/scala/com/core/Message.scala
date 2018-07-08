@@ -16,8 +16,8 @@ import java.nio.charset._
 
 case class Message(id: Id[Message],
                 updatedOn: Instant,
-                from: Id[User],
-                to: Id[User],
+                author: Id[User],
+                dest: Id[User],
                 text: String,
                 deleted: Boolean)
 

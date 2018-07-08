@@ -98,26 +98,21 @@ object Main {
         if (input == "query") {
           println("What word are you looking for? ")
           print("> ")
-          val input = scala.io.StdIn.readLine()
-          if (input == "query") {
-            println("What word are you looking for? ")
-            print("> ")
-            val query = scala.io.StdIn.readLine()
-            val tmp = Query.LoadMessages()
-            tmp.foreach(x => println(x))
-          }
-          else if (input == "produce") {
-
-          }
-          else if (input == "cachetohdfs") {
-            CassandraDB.toHDFS()
-          }
-          else if (input == "exit") {
-            break
-          }
-          else {
-            println("Unknown operation")
-          }
+          val query = scala.io.StdIn.readLine()
+          val res = Query.SearchMessages(query)
+          println("result of query " + query + ": ")
+          res.foreach(x => println("from: " + x.author.value + ", to: " + x.dest.value + ", message: " + x.text))
+        }
+        else if (input == "produce") {
+        }
+        else if (input == "cachetohdfs") {
+          CassandraDB.toHDFS()
+        }
+        else if (input == "exit") {
+          break
+        }
+        else {
+          println("Unknown operation")
         }
       }
     }

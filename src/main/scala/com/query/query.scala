@@ -45,11 +45,15 @@ object Query {
                          UriSerializer
 
   def LoadMessages(): RDD[Message] = {
-    val tt = sc.textFile("hdfs://localhost:9000/user/hdfs/socialNetwork/messages")
-    val tmp = tt.map(x => x.slice(12, x.size))
-
-    tmp.foreach(x => println(x))
-    tmp.map(read[Message])
+    val db = sc.objectFile[CassandraRow]("hdfs://localhost:9000/user/hdfs/socialNetwork/messages")
+    db.map(elt => {
+        Message(Id[Message](""),
+        Instant.parse(elt.getString("updatedon")),
+        Id[User](elt.getString("author")),
+        Id[User](elt.getString("dest")),
+        elt.getString("text"),
+        elt.getBoolean("deleted"))
+    })
   }
 
   def SearchMessages(query: String): RDD[Message] = {

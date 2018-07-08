@@ -18,6 +18,7 @@ object CassandraDB {
 
   val conf = new SparkConf(true)
       .set("spark.cassandra.connection.host", "localhost")
+      .set("spark.driver.allowMultipleContexts", "true")
 
   /*val sc = new SparkContext("local", "cassandra", conf)
   sc.setLogLevel("ERROR")*/
@@ -102,17 +103,39 @@ object CassandraDB {
     }
   }
 
+  def getMessages() : RDD[Message] = {
+    val sc = new SparkContext("local", "cassandra", conf)
+    sc.setLogLevel("ERROR")
+
+    val req = CassandraConnector(conf).withSessionDo{ session =>
+      session.execute("USE socialNetwork")
+      session.execute("SELECT * FROM messages").all.asScala
+    }
+
+    val tmp = req.map(elt => {
+      Message(Id[Message](""),
+      Instant.parse(elt.getString("updatedOn")),
+      Id[User](elt.getString("author")),
+      Id[User](elt.getString("dest")),
+      elt.getString("text"),
+      elt.getBool("deleted"))
+    })
+    val ret = sc.parallelize(tmp)
+
+    ret
+  }
+
   def toHDFS() = {
 
     val sc = new SparkContext("local", "cassandra", conf)
     sc.setLogLevel("ERROR")
 
     sc.cassandraTable("socialnetwork", "users")
-      .saveAsTextFile("hdfs://localhost:9000/user/hdfs/socialNetwork/users");
+      .saveAsObjectFile("hdfs://localhost:9000/user/hdfs/socialNetwork/users");
     sc.cassandraTable("socialnetwork", "messages")
-      .saveAsTextFile("hdfs://localhost:9000/user/hdfs/socialNetwork/messages");
+      .saveAsObjectFile("hdfs://localhost:9000/user/hdfs/socialNetwork/messages");
     sc.cassandraTable("socialnetwork", "posts")
-      .saveAsTextFile("hdfs://localhost:9000/user/hdfs/socialNetwork/posts");
+      .saveAsObjectFile("hdfs://localhost:9000/user/hdfs/socialNetwork/posts");
 
     sc.stop
   }
@@ -168,7 +191,7 @@ object CassandraDB {
     CassandraConnector(conf).withSessionDo{ session =>
       session.execute("USE socialNetwork")
       session.execute("INSERT INTO messages(id, updatedOn, author, dest, text, deleted) VALUES (now(), \'"
-                       + message.updatedOn.toString() + "\', \'" + message.from.value + "\', \'" +  message.to.value + "\', \'"
+                       + message.updatedOn.toString() + "\', \'" + message.author.value + "\', \'" +  message.dest.value + "\', \'"
                        + message.text +  "\', " + message.deleted + ")").wasApplied
     }
   }
