@@ -48,7 +48,7 @@ object Main {
 
   def Listen() = {
     // CassandraDB
-    // CassandraDB.createDB()
+    CassandraDB.createDB()
 
     // Consumers
     val groupId = "group"
