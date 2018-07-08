@@ -31,9 +31,8 @@ object Main {
 
 
   def main(args: Array[String]) {
-
-
-    /*val uri = URI.create("http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png")
+    /*
+    val uri = URI.create("http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png")
 
     val post = Post(Id("post6"), Instant.now(), Id("Garfounkel"), "Some Text", uri, false)
     val user = User(Id("Garfounkel"), Instant.now(), uri, false)
@@ -42,62 +41,62 @@ object Main {
 
     println(write(msg))
 
-    // val postProducer = KafkaMultiProducer()
-    // postProducer.send(post)
-    // postProducer.close()
-    //
-    // val userProducer = KafkaMultiProducer()
-    // userProducer.send(user)
-    // userProducer.close()
-    //
-    // val commentProducer = KafkaMultiProducer()
-    // commentProducer.send(comment)
-    // commentProducer.close()
-
     println("------ Main ------\n")
     // consumer goes here
     if (args.size > 0 && args(0) == "listener") {
+      val main = Thread.currentThread()
+      Listen()
+      main.interrupt()
+    }
+    else { // if its not a consumer, then start the shell
+      InteractiveQuery()
+    }
+    println("\n------ Exit ------")
+  }
 
-      // CassandraDB
-      CassandraDB.createDB()
 
-      // Consumers
-      val groupId = "group"
-      val brokers = "localhost:9092"
+  def Listen() = {
+    // CassandraDB
+    // CassandraDB.createDB()
 
-      val consumer_users = new ConsumerExecutor[User](brokers, groupId + 1)
-      consumer_users.run()
+    // Consumers
+    val groupId = "group"
+    val brokers = "localhost:9092"
 
-      val consumer_msgs = new ConsumerExecutor[Message](brokers, groupId + 2)
-      consumer_msgs.run()
+    val consumer_users = new ConsumerExecutor[User](brokers, groupId + 1)
+    val consumer_msgs = new ConsumerExecutor[Message](brokers, groupId + 2)
+    val consumer_posts = new ConsumerExecutor[Post](brokers, groupId + 3)
 
-      val consumer_posts = new ConsumerExecutor[Post](brokers, groupId + 3)
-      consumer_posts.run()
+    val consumers = List(consumer_users, consumer_msgs, consumer_posts)
+    consumers.foreach(x => x.run())
 
-      // Safely exit consumers
-      breakable {
-        println()
-        while (true) {
-          println("Listening on multiple topics: users, posts and messages...")
-          println("Enter exit to safely shutdown all threads and consumers.")
-          print("> ")
-          val input = scala.io.StdIn.readLine()
-          if (input == "exit") {
-            consumer_users.shutdown()
-            consumer_msgs.shutdown()
-            consumer_posts.shutdown()
-            break
-          }
-          else {
-            println("Unknown operation\n")
-          }
+    // Safely exit consumers
+    breakable {
+      println()
+      while (true) {
+        println("Listening on multiple topics: users, posts and messages...")
+        println("Enter exit to safely shutdown all threads and consumers.")
+        print("> ")
+        val input = scala.io.StdIn.readLine()
+        if (input == "exit") {
+          consumers.foreach(x => x.shutdown())
+          break
+        }
+        else {
+          println("Unknown operation\n")
         }
       }
     }
-    else { // if its not a consumer, then start the shell
-      breakable {
-        while (true) {
-          println("Enter the operation you need (query/produce/cachetohdfs)")
+  }
+
+  def InteractiveQuery() = {
+    breakable {
+      while (true) {
+        println("Enter the operation you need (query/produce/cachetohdfs)")
+        print("> ")
+        val input = scala.io.StdIn.readLine()
+        if (input == "query") {
+          println("What word are you looking for? ")
           print("> ")
           val input = scala.io.StdIn.readLine()
           if (input == "query") {
@@ -122,6 +121,5 @@ object Main {
         }
       }
     }
-    println("\n------ Exit ------")
   }
 }
