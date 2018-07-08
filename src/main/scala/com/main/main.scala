@@ -47,7 +47,6 @@ object Main {
   }
 
   def Listen() = {
-    // CassandraDB
     CassandraDB.createDB()
 
     // Consumers
@@ -121,35 +120,7 @@ object Main {
 
         }
         else if (input == "produce") {
-          val uri = URI.create("http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png")
-
-          val post = Post(Id("post1"), Instant.now(), Id("user1"), "Some Text", uri, false)
-
-          val user1 = User(Id("user1"), Instant.now(), uri, false)
-          val user2 = User(Id("user2"), Instant.now(), uri, false)
-
-          val msg1 = Message(Id("msg01"), Instant.now(), Id("user1"), Id("user2"), "Some message", false)
-          val msg2 = Message(Id("msg02"), Instant.now(), Id("user2"), Id("user1"), "I like Burger King", false)
-          val msg3 = Message(Id("msg03"), Instant.now(), Id("user1"), Id("user1"), "I prefer KFC", false)
-
-          val producer = KafkaMultiProducer()
-
-          producer.send[Post](post)
-
-          producer.send[User](user1)
-          producer.send[User](user2)
-
-          producer.send[Message](msg1)
-          producer.send[Message](msg2)
-          producer.send[Message](msg3)
-
-          println("All these messages were produced:")
-          println(write(user1))
-          println(write(user2))
-          println(write(post))
-          println(write(msg1))
-          println(write(msg2))
-          println(write(msg3))
+          ProduceData()
         }
         else if (input == "cachetohdfs") {
           CassandraDB.toHDFS()
@@ -162,5 +133,37 @@ object Main {
         }
       }
     }
+  }
+
+  def ProduceData() = {
+    val uri = URI.create("http://i.prntscr.com/XXS-8L2tR7id1MSgJDywoQ.png")
+
+    val post = Post(Id("post1"), Instant.now(), Id("user1"), "Some Text", uri, false)
+
+    val user1 = User(Id("user1"), Instant.now(), uri, false)
+    val user2 = User(Id("user2"), Instant.now(), uri, false)
+
+    val msg1 = Message(Id("msg01"), Instant.now(), Id("user1"), Id("user2"), "Some message", false)
+    val msg2 = Message(Id("msg02"), Instant.now(), Id("user2"), Id("user1"), "I like Burger King", false)
+    val msg3 = Message(Id("msg03"), Instant.now(), Id("user1"), Id("user1"), "I prefer KFC", false)
+
+    val producer = KafkaMultiProducer()
+
+    producer.send[Post](post)
+
+    producer.send[User](user1)
+    producer.send[User](user2)
+
+    producer.send[Message](msg1)
+    producer.send[Message](msg2)
+    producer.send[Message](msg3)
+
+    println("All these messages were produced:")
+    println(write(user1))
+    println(write(user2))
+    println(write(post))
+    println(write(msg1))
+    println(write(msg2))
+    println(write(msg3))
   }
 }
