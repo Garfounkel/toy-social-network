@@ -18,3 +18,5 @@ libraryDependencies += "com.datastax.spark" %% "spark-cassandra-connector" % "2.
 libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.0.0"
 libraryDependencies += "org.apache.kafka" % "kafka-streams" % kafkaVersion
 libraryDependencies += "org.apache.kafka" % "kafka-clients" % kafkaVersion
+
+trapExit := false

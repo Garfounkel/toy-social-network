@@ -43,7 +43,9 @@ object Main {
     println("------ Main ------\n")
     // consumer goes here
     if (args.size > 0 && args(0) == "listener") {
+      val main = Thread.currentThread()
       Listen()
+      main.interrupt()
     }
     else { // if its not a consumer, then start the shell
       InteractiveQuery()
